@@ -1,7 +1,7 @@
 # copyvols
-clone 2 InfiniBox volumes /n
-the script creates a snapshot from the source volume and creates the destination volume. /n
-it than maps both to host and preforms xcopy operation, once completed it unmaps both volumes and delete the snapshot. /n
+clone 2 InfiniBox volumes <br>
+the script creates a snapshot from the source volume and creates the destination volume. <br>
+it than maps both to host and preforms xcopy operation, once completed it unmaps both volumes and delete the snapshot. <br>
 
 ## Prerequisites
 this script used infinisdk and infi.storagemodel  modules
