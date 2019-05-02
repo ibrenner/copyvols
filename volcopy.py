@@ -1,7 +1,7 @@
-# from infi.storagemodel.vendor.infinidat.shortcuts import get_infinidat_block_devices
 from infinisdk import InfiniBox
 import argparse
 import getpass
+import os
 
 def get_args():
     """
@@ -35,7 +35,7 @@ def check_vol(dst_vol):
 
 def create_snap():
     snap=src_vol[0].create_child(name='{}_tempclone'.format(src_vol[0].get_name()))
-    snap.enable_write_protection()
+    snap.disable_write_protection()
     map_vol("map",snap.get_name())
     return snap
 
@@ -43,7 +43,7 @@ def map_vol(op,vol):
     from subprocess import check_output,CalledProcessError,PIPE
     retcode = 0
     try:
-        output = check_output("infinihost volume {} {} --yes".format(op,vol),shell=True,stderr=PIPE)
+        output = check_output("infinihost volume {} {} --system={} --yes".format(op,vol,args.ibox),shell=True,stderr=PIPE)
     except CalledProcessError as e:
         retcode = e.returncode
 
@@ -58,16 +58,10 @@ def vol_compare(vol1, infivols):
             return vol.get_device_mapper_access_path()
             
 
-def copyvols(src,dst):
-    import io
-    with io.open("{}".format(src), 'rb', 65537) as in_file, io.open("{}".format(dst),'wb', 65537) as out_file:
-            while True:
-                    content = in_file.read(512)
-                    content_to_write = memoryview(content)
-                    out_file.write(content_to_write)
-                    if not content:
-                            break
 
+def compilecmd(src,dst):
+    cmd = 'sg_xcopy if={} of={} bpt=16384'.format(src,dst)
+    return cmd
     
 
 if __name__ == '__main__':
@@ -91,56 +85,11 @@ if __name__ == '__main__':
     source_vol = vol_compare(snap.get_name(), infivols) 
     target_vol = vol_compare(new_vol.get_name(), infivols)
     print("starting copy, please wait...")
-    copyvols(source_vol,target_vol)
+    cmd=compilecmd(source_vol,target_vol)
+    os.system(cmd)
     print("copy finished, cleaning up")
     map_vol("unmap",snap.get_name())
     map_vol("unmap",new_vol.get_name())
     snap.delete()
 
-
-
-
-
-    
-
-
-
-
-
-
-
-
-# with open('/dev/mapper/mpathn' ,'rb', 0) as f:
-#     with open('/dev/mapper/mpathx', 'wb', 0) as i:
-#         while True:
-#             if i.write(f.read(512)) == 0:
-#                 break
-
-# import io
-# import itertools
-# b = bytearray(16)
-# with io.open('/dev/mapper/mpathn', 'rb') as f:
-#     with io.open('/dev/mapper/mpathx', 'wb') as i:
-#         while True:
-#             if i.write(f.read(512)) == 0:
-#                 break
-
-
-
-#with open("/dev/mapper/mpathn", 'rb') as in_file, open("/dev/mapper/mpathw",'wb') as out_file:
-#    while True:
-#        piece = in_file.read(4096)
-#        if not piece:
-#            break # end of file
-#
-#        out_file.write(piece)
-
-# import io
-# with io.open("/dev/mapper/mpathn", 'rb', 65537) as in_file, io.open("/dev/mapper/mpathw",'wb', 65537) as out_file:
-#         while True:
-#                 content = in_file.read(512)
-#                 content_to_write = memoryview(content)
-#                 out_file.write(content_to_write)
-#                 if not content:
-#                         break
 
